@@ -1,0 +1,25 @@
+{% extends 'base.html' %}{% from '_macros.html' import badge, pager %}
+{% block title %}Billing{% endblock %}
+{% block h1 %}Billing{% endblock %}
+{% block sub %}Monthly invoices, payments and overdue handling{% endblock %}
+{% block body %}
+<div class="grid cols2">
+  <div class="card"><h2>Monthly billing summary</h2><div class="hint">View <code>v_monthly_revenue</code></div><div class="tw"><table><thead><tr><th>Month</th><th class="r">Bills</th><th class="r">Billed</th><th class="r">Paid</th><th class="r">Pending</th><th class="r">Overdue</th></tr></thead><tbody>
+  {% for m in months %}<tr><td><a href="?month={{ m.ym }}">{{ m.label }}</a></td><td class="r">{{ m.bills|num }}</td><td class="r">{{ m.billed_amount|money }}</td><td class="r">{{ m.paid_amount|money }}</td><td class="r">{{ m.pending_amount|money }}</td><td class="r">{{ m.overdue_amount|money }}</td></tr>{% endfor %}</tbody></table></div></div>
+  <div class="card no-print"><h2>Billing operations</h2><div class="hint">Stored procedures that change data</div>
+    <form method="post" action="{{ url_for('billing_run') }}" style="margin-bottom:16px"><label>Run billing · <code>sp_generate_bills</code></label>
+      <div style="display:flex;gap:8px"><input type="month" name="month" value="2026-10" required><button class="btn primary">Generate bills</button></div>
+      <div class="sub" style="margin-top:6px">Creates one bill per active subscription; running it twice creates nothing new.</div></form>
+    <form method="post" action="{{ url_for('billing_overdue') }}"><label>Flag late payments · <code>sp_mark_overdue_bills</code></label><button class="btn">Mark overdue bills</button></form>
+  </div>
+</div>
+<form class="filters card no-print" method="get" style="margin-top:16px">
+  <div style="flex:2"><label>Customer</label><input name="q" value="{{ a.get('q','') }}" placeholder="Name or ID" style="width:100%"></div>
+  <div><label>Status</label><select name="status"><option value="">All</option>{% for s in ['PENDING','PAID','OVERDUE'] %}<option {{ 'selected' if a.get('status')==s }}>{{ s }}</option>{% endfor %}</select></div>
+  <div><label>Month</label><input type="month" name="month" value="{{ a.get('month','') }}"></div><button class="btn primary">Filter</button>
+</form>
+<div class="card tw"><table><thead><tr><th>Bill</th><th>Customer</th><th>Month</th><th class="r">Amount</th><th>Status</th><th>Due</th><th>Paid</th><th></th></tr></thead><tbody>
+{% for b in rows %}<tr><td>#{{ b.bill_id }}</td><td><a href="{{ url_for('customer', cid=b.customer_id) }}">{{ b.full_name }}</a><div class="sub">{{ b.customer_id }}</div></td><td>{{ b.bill_month.strftime('%b %Y') }}</td><td class="r">{{ b.amount|money }}</td><td>{{ badge(b.status) }}</td><td>{{ b.due_date|d }}</td><td>{{ b.paid_date|d }}</td>
+<td>{% if b.status!='PAID' %}<form class="inline" method="post" action="{{ url_for('billing_pay', bid=b.bill_id) }}"><button class="btn sm">Record payment</button></form>{% endif %}</td></tr>
+{% else %}<tr><td colspan="8" class="sub">No bills match.</td></tr>{% endfor %}</tbody></table>{{ pager(page,pages,total,request.args) }}</div>
+{% endblock %}

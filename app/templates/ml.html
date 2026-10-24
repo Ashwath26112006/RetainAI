@@ -1,0 +1,33 @@
+{% extends 'base.html' %}{% from '_macros.html' import badge, pager %}
+{% block title %}ML prediction{% endblock %}
+{% block h1 %}Machine-learning churn prediction{% endblock %}
+{% block sub %}Optional module · scikit-learn model trained on data read from Oracle; probabilities are written back with <code>sp_save_ml_score</code>{% endblock %}
+{% block body %}
+<div class="grid cols2">
+ <form class="card" method="post"><input type="hidden" name="action" value="train"><h2>Train &amp; score</h2>
+  <div class="hint">Trains Logistic Regression and Gradient Boosting on a 75/25 stratified split, keeps the better ROC-AUC model, re-fits it on all customers and stores each customer's churn probability in <code>CHURN_SCORES</code>.</div>
+  <button class="btn primary">Train model &amp; score all customers</button></form>
+ <form class="card" method="post"><input type="hidden" name="action" value="predict"><h2>What-if prediction</h2><div class="hint">Probability of churn for a hypothetical customer</div>
+  <div class="form"><div><label>Tenure (months)</label><input name="tenure" type="number" value="{{ f.get('tenure','5') }}" min="0" style="width:100%"></div>
+   <div><label>Monthly charge</label><input name="charge" type="number" step="0.01" value="{{ f.get('charge','85') }}" style="width:100%"></div>
+   <div><label>Add-on services</label><input name="addons" type="number" min="0" max="7" value="{{ f.get('addons','0') }}" style="width:100%"></div>
+   <div><label>Contract</label><select name="contract" style="width:100%">{% for c in contracts %}<option {{ 'selected' if f.get('contract')==c }}>{{ c }}</option>{% endfor %}</select></div>
+   <div><label>Internet</label><select name="internet" style="width:100%">{% for c in ['Fiber optic','DSL','No'] %}<option {{ 'selected' if f.get('internet')==c }}>{{ c }}</option>{% endfor %}</select></div>
+   <div><label>Payment</label><select name="payment" style="width:100%">{% for c in methods %}<option {{ 'selected' if f.get('payment')==c }}>{{ c }}</option>{% endfor %}</select></div>
+   <div class="full tags">{% for k,l in [('paperless','Paperless'),('senior','Senior'),('partner','Partner'),('dependents','Dependents')] %}<label style="display:inline-flex;gap:6px;align-items:center;font-weight:500;color:var(--ink)"><input type="checkbox" name="{{ k }}" value="Y" {{ 'checked' if f.get(k) }}> {{ l }}</label>{% endfor %}</div>
+   <div class="full"><button class="btn">Predict</button> {% if prediction is not none %}<span style="margin-left:12px;font-size:1.3rem;font-weight:700">{{ (prediction*100)|pct }}</span> <span class="sub">churn probability</span>{% endif %}</div></div></form>
+</div>
+{% if result %}
+<div class="card" style="margin-top:16px"><h2>Latest training run · {{ result.best }}</h2><div class="hint">{{ result.n_train|num }} training rows, {{ result.n_test|num }} hold-out rows, {{ result.scored|num }} customers scored</div>
+ <div class="tw"><table><thead><tr><th>Model</th><th class="r">ROC-AUC</th><th class="r">Accuracy</th><th class="r">Precision</th><th class="r">Recall</th><th class="r">F1</th><th>Confusion matrix [TN FP / FN TP]</th></tr></thead><tbody>
+ {% for n,r in result.results.items() %}<tr><td><b>{{ n }}</b> {% if n==result.best %}<span class="chip">selected</span>{% endif %}</td><td class="r">{{ '%.3f'|format(r.auc) }}</td><td class="r">{{ '%.3f'|format(r.accuracy) }}</td><td class="r">{{ '%.3f'|format(r.precision) }}</td><td class="r">{{ '%.3f'|format(r.recall) }}</td><td class="r">{{ '%.3f'|format(r.f1) }}</td><td>{{ r.cm[0] }} / {{ r.cm[1] }}</td></tr>{% endfor %}</tbody></table></div>
+ <h2 style="margin-top:16px">Strongest drivers</h2><div id="drv" class="chart"></div></div>
+<script>
+const D={{ result.drivers|tojson }};
+barChart('drv',D.map(x=>x[0].replace(/_/g,' ').slice(0,22)),[{name:'weight',values:D.map(x=>Math.abs(x[1]))}],{format:v=>Number(v).toFixed(2),height:300,colors:['#8a63d2']});
+</script>
+{% endif %}
+<div class="card tw" style="margin-top:16px"><h2>Training history (table <code>ml_model_runs</code>)</h2><table><thead><tr><th>Run</th><th>Model</th><th>Trained</th><th class="r">Train</th><th class="r">Test</th><th class="r">Accuracy</th><th class="r">Precision</th><th class="r">Recall</th><th class="r">F1</th><th class="r">AUC</th></tr></thead><tbody>
+{% for r in runs %}<tr><td>{{ r.run_id }}</td><td>{{ r.model_name }}</td><td>{{ r.trained_at|d }}</td><td class="r">{{ r.n_train|num }}</td><td class="r">{{ r.n_test|num }}</td><td class="r">{{ r.accuracy }}</td><td class="r">{{ r.prec }}</td><td class="r">{{ r.recall }}</td><td class="r">{{ r.f1 }}</td><td class="r">{{ r.roc_auc }}</td></tr>
+{% else %}<tr><td colspan="10" class="sub">No model has been trained yet.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

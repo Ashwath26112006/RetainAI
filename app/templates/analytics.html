@@ -1,0 +1,29 @@
+{% extends 'base.html' %}{% from '_macros.html' import badge, pager %}
+{% block title %}Churn analytics{% endblock %}
+{% block h1 %}Churn analytics &amp; segmentation{% endblock %}
+{% block sub %}Which customers leave, why they are different, and how well the risk score separates them{% endblock %}
+{% block body %}
+<div class="grid cols2">
+  <div class="card"><h2>Churn by contract</h2><div id="a1" class="chart"></div></div>
+  <div class="card"><h2>Churn by payment method</h2><div id="a2" class="chart"></div></div>
+  <div class="card"><h2>Churn by internet service</h2><div id="a3" class="chart"></div></div>
+  <div class="card"><h2>Churn by tenure band</h2><div id="a4" class="chart"></div></div>
+  <div class="card"><h2>Churn: senior vs non-senior</h2><div id="a5" class="chart"></div></div>
+  <div class="card"><h2>Revenue by segment</h2><div class="hint">Monthly revenue of active customers per segment</div><div id="a6" class="chart"></div></div>
+</div>
+<div class="grid cols2" style="margin-top:16px">
+  <div class="card"><h2>Segment summary</h2><div class="hint">Procedure <code>pkg_retainai.segment_report</code></div><div class="tw"><table><thead><tr><th>Segment</th><th class="r">Customers</th><th class="r">Active</th><th class="r">Avg charge</th><th class="r">MRR</th><th class="r">Avg risk</th></tr></thead><tbody>
+  {% for s in seg %}<tr><td>{{ badge(s.segment) }}</td><td class="r">{{ s.customers|num }}</td><td class="r">{{ s.active_customers|num }}</td><td class="r">{{ s.avg_monthly_charge|money }}</td><td class="r">{{ s.monthly_revenue|money }}</td><td class="r">{{ s.avg_risk_score }}</td></tr>{% endfor %}</tbody></table></div></div>
+  <div class="card"><h2>Does the risk score work?</h2><div class="hint">Observed churn of customers in each risk band (view <code>v_risk_distribution</code>)</div><div id="a7" class="chart" style="min-height:140px"></div><div class="tw"><table><thead><tr><th>Band</th><th class="r">Customers</th><th class="r">Churned</th><th class="r">Observed churn</th></tr></thead><tbody>
+  {% for r in risk %}<tr><td>{{ badge(r.risk_band) }}</td><td class="r">{{ r.customers|num }}</td><td class="r">{{ r.churned|num }}</td><td class="r">{{ r.observed_churn_pct|pct(2) }}</td></tr>{% endfor %}</tbody></table></div></div>
+</div>
+<script>
+(async()=>{
+ const P=[['CONTRACT','a1'],['PAYMENT','a2'],['INTERNET','a3'],['TENURE_BAND','a4'],['SENIOR','a5']];
+ for(const [d,id] of P){const r=await api('/api/churn/'+d);
+   barChart(id,r.map(x=>x.dimension_value),[{name:'Churn %',values:r.map(x=>x.churn_rate_pct)}],{format:fmt.pct,height:250,colors:['#3b6fe0']});}
+ const s=await api('/api/segments');barChart('a6',s.map(x=>x.segment),[{name:'MRR',values:s.map(x=>x.monthly_revenue)}],{format:fmt.usd,perBar:true,height:250});
+ const k=await api('/api/risk');barChart('a7',k.map(x=>x.risk_band),[{name:'Observed churn %',values:k.map(x=>x.observed_churn_pct)}],{format:fmt.pct,height:200,perBar:true,colors:['#2fb36d','#f2a33a','#e5484d']});
+})();
+</script>
+{% endblock %}

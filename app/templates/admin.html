@@ -1,0 +1,19 @@
+{% extends 'base.html' %}{% from '_macros.html' import badge, pager %}
+{% block title %}Administration{% endblock %}
+{% block h1 %}Administration{% endblock %}
+{% block sub %}Database inventory, audit trail, automated tests and system settings{% endblock %}
+{% block body %}
+<div class="grid cols3">
+ <div class="card"><h2>Table sizes</h2><table><tbody>{% for t in tables %}<tr><td>{{ t.name }}</td><td class="r">{{ t.n|num }}</td></tr>{% endfor %}</tbody></table></div>
+ <div class="card"><h2>Schema objects</h2><div class="hint">All objects must be VALID</div><table><thead><tr><th>Type</th><th class="r">Total</th><th class="r">Valid</th></tr></thead><tbody>{% for o in objects %}<tr><td>{{ o.object_type }}</td><td class="r">{{ o.total }}</td><td class="r">{{ o.valid }}</td></tr>{% endfor %}</tbody></table></div>
+ <div class="card no-print"><h2>System operations</h2>
+  <form method="post" action="{{ url_for('admin_refresh') }}" style="margin-bottom:16px"><label>Re-score every customer · <code>pkg_retainai.refresh_analytics</code></label><button class="btn primary">Refresh analytics</button></form>
+  <form method="post" action="{{ url_for('admin_refdate') }}"><label>Business date · <code>sp_set_reference_date</code></label><div style="display:flex;gap:8px"><input type="date" name="date" value="{{ ref }}" required><button class="btn">Update</button></div></form></div>
+</div>
+<div class="grid cols2" style="margin-top:16px">
+ <div class="card tw"><h2>Triggers</h2><table><thead><tr><th>Trigger</th><th>Event</th><th>Table</th><th>Status</th></tr></thead><tbody>{% for t in triggers %}<tr><td>{{ t.trigger_name }}</td><td>{{ t.triggering_event }}</td><td>{{ t.table_name }}</td><td>{{ badge(t.status) }}</td></tr>{% endfor %}</tbody></table></div>
+ <div class="card tw"><h2>Automated test results</h2><div class="hint">Stored by <code>sql/12_tests.sql</code></div><table><tbody>{% for t in tests %}<tr><td>{{ t.tc_id }}</td><td>{{ t.description }}</td><td>{{ badge(t.status) }}</td></tr>{% else %}<tr><td class="sub">Run sql/12_tests.sql to populate.</td></tr>{% endfor %}</tbody></table></div>
+</div>
+<div class="card tw" style="margin-top:16px"><h2>Latest audit-trail entries</h2><div class="hint">Written by database triggers, never by the application</div><table><thead><tr><th>#</th><th>Table</th><th>Operation</th><th>Key</th><th>Old</th><th>New</th><th>When</th></tr></thead><tbody>
+{% for a in audit %}<tr><td>{{ a.audit_id }}</td><td>{{ a.table_name }}</td><td>{{ a.operation }}</td><td>{{ a.record_key }}</td><td>{{ a.old_value }}</td><td>{{ a.new_value }}</td><td>{{ a.changed_at }}</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

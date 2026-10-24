@@ -1,0 +1,60 @@
+{% extends 'base.html' %}{% from '_macros.html' import badge, pager %}
+{% block title %}{{ c.full_name }}{% endblock %}
+{% block h1 %}{{ c.full_name }} {{ badge(c.customer_status) }}{% endblock %}
+{% block sub %}{{ c.customer_id }} · {{ c.email }} · customer since {{ c.signup_date|d }}{% endblock %}
+{% block actions %}<a class="btn" href="{{ url_for('customers') }}">← All customers</a>{% endblock %}
+{% block body %}
+<div class="grid cols3">
+  <div class="card"><h2>Churn risk</h2><div class="hint">Rule score (function <code>fn_churn_risk_score</code>) and ML probability</div>
+    <div style="font-size:2.3rem;font-weight:700">{{ c.rule_score|int if c.rule_score is not none else '-' }}<small style="font-size:1rem;color:var(--muted)"> / 100</small></div>
+    <div class="bar {{ 'hi' if c.risk_band=='HIGH' else 'lo' if c.risk_band=='LOW' }}" style="margin:6px 0 10px"><span style="width:{{ c.rule_score or 0 }}%"></span></div>
+    {{ badge(c.risk_band) }} {{ badge(c.segment) }}
+    <div class="sub" style="margin-top:10px">ML churn probability: <b>{{ (c.ml_probability*100)|pct if c.ml_probability is not none else 'not trained yet' }}</b>{% if c.ml_model %} · {{ c.ml_model }}{% endif %}</div>
+    <form class="inline no-print" method="post" action="{{ url_for('customer_rescore', cid=c.customer_id) }}" style="margin-top:12px"><button class="btn sm">Re-score now</button></form>
+  </div>
+  <div class="card"><h2>Subscription</h2><div class="hint">Current subscription #{{ c.subscription_id }} · {{ badge(c.subscription_status) }}</div>
+    <dl class="profile">
+      <div><dt>Plan</dt><dd>{{ c.plan_name }}</dd></div><div><dt>Contract</dt><dd>{{ c.contract_name }}</dd></div>
+      <div><dt>Monthly charge</dt><dd>{{ c.monthly_charge|money }}</dd></div><div><dt>Payment</dt><dd>{{ c.payment_method }}</dd></div>
+      <div><dt>Tenure</dt><dd>{{ c.tenure_months|int }} months</dd></div><div><dt>Lifetime value</dt><dd>{{ ltv|money }}</dd></div>
+      <div><dt>Paperless billing</dt><dd>{{ 'Yes' if c.paperless_billing=='Y' else 'No' }}</dd></div><div><dt>Start date</dt><dd>{{ c.start_date|d }}</dd></div>
+    </dl>
+    <div class="tags" style="margin-top:12px">{% for s in services %}<span class="chip">{{ s.service_name }}</span>{% else %}<span class="sub">No add-on services</span>{% endfor %}</div>
+  </div>
+  <div class="card no-print"><h2>Actions</h2><div class="hint">Each button calls a stored procedure</div>
+    {% if c.subscription_status=='ACTIVE' %}
+    <form method="post" action="{{ url_for('customer_cancel', cid=c.customer_id) }}" style="margin-bottom:14px">
+      <input type="hidden" name="subscription_id" value="{{ c.subscription_id }}">
+      <label>Cancel subscription · <code>sp_cancel_subscription</code></label>
+      <div style="display:flex;gap:8px"><input name="reason" placeholder="Reason" style="flex:1"><button class="btn danger">Cancel</button></div>
+    </form>
+    {% elif c.subscription_status=='CANCELLED' %}
+    <form method="post" action="{{ url_for('customer_reactivate', cid=c.customer_id) }}" style="margin-bottom:14px">
+      <input type="hidden" name="subscription_id" value="{{ c.subscription_id }}">
+      <label>Win-back · <code>sp_reactivate_subscription</code></label><button class="btn primary">Re-activate subscription</button>
+      <div class="sub" style="margin-top:6px">Cancelled {{ c.end_date|d }}</div>
+    </form>{% endif %}
+    <form method="post" action="{{ url_for('customer_ticket', cid=c.customer_id) }}">
+      <label>Open support ticket · <code>sp_open_ticket</code></label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <select name="category">{% for x in ['BILLING','TECHNICAL','SERVICE','CANCELLATION','OTHER'] %}<option>{{ x }}</option>{% endfor %}</select>
+        <select name="priority">{% for x in ['LOW','MEDIUM','HIGH','URGENT'] %}<option {{ 'selected' if x=='MEDIUM' }}>{{ x }}</option>{% endfor %}</select>
+        <input name="subject" placeholder="Subject" required style="grid-column:1/-1"><button class="btn" style="grid-column:1/-1">Open ticket</button></div>
+    </form>
+  </div>
+</div>
+<div class="grid cols2" style="margin-top:16px">
+  <div class="card"><h2>Billing history</h2><div class="tw"><table><thead><tr><th>Month</th><th class="r">Amount</th><th>Status</th><th>Due</th><th>Paid</th><th></th></tr></thead><tbody>
+  {% for b in bills %}<tr><td>{{ b.bill_month.strftime('%b %Y') }}</td><td class="r">{{ b.amount|money }}</td><td>{{ badge(b.status) }}</td><td>{{ b.due_date|d }}</td><td>{{ b.paid_date|d }}</td>
+  <td>{% if b.status!='PAID' %}<form class="inline" method="post" action="{{ url_for('billing_pay', bid=b.bill_id) }}"><input type="hidden" name="back" value="{{ request.path }}"><button class="btn sm">Mark paid</button></form>{% endif %}</td></tr>
+  {% else %}<tr><td colspan="6" class="sub">No bills yet.</td></tr>{% endfor %}</tbody></table></div></div>
+  <div class="card"><h2>Support tickets</h2><div class="tw"><table><thead><tr><th>#</th><th>Subject</th><th>Priority</th><th>Status</th><th>Opened</th><th></th></tr></thead><tbody>
+  {% for t in tickets %}<tr><td>{{ t.ticket_id }}</td><td>{{ t.subject }}<div class="sub">{{ t.category }}</div></td><td>{{ badge(t.priority) }}</td><td>{{ badge(t.status) }}</td><td>{{ t.opened_at|d }}</td>
+  <td>{% if t.status in ('OPEN','IN_PROGRESS') %}<form class="inline" method="post" action="{{ url_for('ticket_close', tid=t.ticket_id) }}"><input type="hidden" name="back" value="{{ request.path }}"><button class="btn sm">Close</button></form>{% endif %}</td></tr>
+  {% else %}<tr><td colspan="6" class="sub">No tickets.</td></tr>{% endfor %}</tbody></table></div></div>
+</div>
+<div class="card" style="margin-top:16px"><h2>Retention actions</h2><div class="tw"><table><thead><tr><th>#</th><th>Type</th><th>Campaign</th><th>Date</th><th>Outcome</th><th>Notes</th><th></th></tr></thead><tbody>
+{% for a in actions %}<tr><td>{{ a.action_id }}</td><td>{{ a.action_type }}</td><td>{{ a.campaign_name or '—' }}</td><td>{{ a.action_date|d }}</td><td>{{ badge(a.outcome) }}</td><td>{{ a.notes }}</td>
+<td class="nowrap">{% if a.outcome=='PENDING' %}{% for o in ['ACCEPTED','DECLINED'] %}<form class="inline" method="post" action="{{ url_for('action_outcome', aid=a.action_id) }}"><input type="hidden" name="outcome" value="{{ o }}"><input type="hidden" name="back" value="{{ request.path }}"><button class="btn sm">{{ o.title() }}</button></form> {% endfor %}{% endif %}</td></tr>
+{% else %}<tr><td colspan="7" class="sub">No retention actions yet.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

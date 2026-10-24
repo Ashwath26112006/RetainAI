@@ -1,0 +1,12 @@
+{
+  "python.defaultInterpreterPath": "python",
+  "terminal.integrated.env.windows": {
+    "PATH": "C:\\app\\ashwa\\product\\21c\\dbhomeXE\\bin;${env:PATH}",
+    "RETAINAI_DSN": "localhost:1521/XEPDB1"
+  },
+  "files.associations": { "*.sql": "sql" },
+  "editor.rulers": [100],
+  "files.exclude": { "**/__pycache__": true, "**/.pytest_cache": true },
+  "[sql]": { "editor.tabSize": 2 },
+  "[python]": { "editor.tabSize": 4 }
+}

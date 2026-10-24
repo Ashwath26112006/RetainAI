@@ -1,0 +1,12 @@
+{% extends 'auth_base.html' %}{% block title %}Forgot password{% endblock %}
+{% block form %}
+    <div class="lg-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M11 12.5L20 4M16 8l3 3M14 10l2 2"/></svg></div>
+    <h1>Forgot password?</h1><div class="sub">Enter your username and we will issue a one-time recovery code.</div>
+    {% with msgs = get_flashed_messages(with_categories=true) %}{% for cat, m in msgs %}<div class="flash {{ cat }}">{{ m }}</div>{% endfor %}{% endwith %}
+    <div class="fld"><label for="u">Username</label>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>
+      <input id="u" name="username" value="admin" autofocus autocomplete="username"></div>
+    <button class="btn primary lg-go">Send recovery code</button>
+    <div class="lg-note">No mail server is configured for this lab project, so the code is printed in the terminal where the application is running (the VS Code terminal). It is valid for 10 minutes.</div>
+    <a class="lg-back" href="{{ url_for('login') }}">&larr; Back to sign in</a>
+{% endblock %}

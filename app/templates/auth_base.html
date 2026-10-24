@@ -1,0 +1,39 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Sign in{% endblock %} · RetainAI</title>
+<meta name="theme-color" content="#6366f1">
+<script>try{var t=localStorage.getItem('ra-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}"></head>
+<body><div class="lg">
+  <section class="lg-art" aria-hidden="true">
+    <div class="lg-grid"></div>
+    <div class="lg-emblem" role="img">
+      <svg viewBox="0 0 96 96" width="88" height="88" aria-hidden="true">
+        <defs><linearGradient id="lgE" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5eead4"/><stop offset="1" stop-color="#a5b4fc"/></linearGradient></defs>
+        <path d="M48 8a40 40 0 1 1-36.5 23.6" fill="none" stroke="url(#lgE)" stroke-width="5" stroke-linecap="round"/>
+        <path d="M5.5 22l6.3 10.2L23 27" fill="none" stroke="url(#lgE)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="48" cy="38" r="9.5" fill="#fff"/>
+        <path d="M29 66c1.5-10 9-16 19-16s17.5 6 19 16" fill="#fff"/>
+        <circle cx="68" cy="66" r="11" fill="#14b8a6" stroke="#312e81" stroke-width="3"/>
+        <path d="M62.5 66.2l4 4 7-8" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Customer retention</span>
+    </div>
+    <div class="lg-hero">
+      <h2>Keep the customers<br><span>you already won.</span></h2>
+      <p>Churn analytics, risk scoring and retention campaigns, computed inside Oracle with PL/SQL.</p>
+      <div class="lg-cards">
+        <div class="lg-card"><small>Customers</small><b>7,043</b><div class="lg-bars"><i style="height:45%"></i><i style="height:60%"></i><i style="height:52%"></i><i style="height:78%"></i><i style="height:92%"></i></div></div>
+        <div class="lg-card"><small>Churn rate</small><b>26.5%</b><div class="lg-bars"><i style="height:90%"></i><i style="height:74%"></i><i style="height:62%"></i><i style="height:48%"></i><i style="height:34%"></i></div></div>
+        <div class="lg-card"><small>Risk bands</small><b>3</b><div class="lg-bars"><i style="height:35%"></i><i style="height:60%"></i><i style="height:100%"></i></div></div>
+      </div>
+    </div>
+    <div class="lg-feats"><span>Real Telco dataset</span><span>Triggers &amp; audit trail</span><span>ML churn model</span></div>
+  </section>
+  <section class="lg-side"><form class="lg-box" method="post" autocomplete="on">
+    <div class="lg-brand"><i>R</i>RetainAI</div>
+    {% block form %}{% endblock %}
+  </form></section>
+</div>
+{% block scripts %}{% endblock %}
+</body></html>

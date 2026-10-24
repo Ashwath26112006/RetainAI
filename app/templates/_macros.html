@@ -1,0 +1,9 @@
+{% macro badge(v) %}<span class="badge b-{{ (v or '')|string|replace(' ','') }}">{{ v if v else '-' }}</span>{% endmacro %}
+{% macro pager(page,pages,total,args) %}
+<div class="pager no-print">
+  <span>{{ total|num }} records · page {{ page }} / {{ pages }}</span>
+  {% set q = args.to_dict() %}
+  {% if page > 1 %}<a class="btn sm" href="?{{ q|dictupdate({'page': page-1})|urlencode }}">‹ Prev</a>{% endif %}
+  {% if page < pages %}<a class="btn sm" href="?{{ q|dictupdate({'page': page+1})|urlencode }}">Next ›</a>{% endif %}
+</div>
+{% endmacro %}

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}{% from '_macros.html' import badge, pager %}
+{% block title %}Retention{% endblock %}
+{% block h1 %}Retention campaigns{% endblock %}
+{% block sub %}Plan offers for HIGH-risk customers and track whether they work{% endblock %}
+{% block body %}
+<div class="card tw"><h2>Campaign effectiveness</h2><div class="hint">View <code>v_campaign_effectiveness</code></div><table><thead><tr><th>Campaign</th><th>Target</th><th class="r">Discount</th><th>Status</th><th class="r">Actions</th><th class="r">Accepted</th><th class="r">Declined</th><th class="r">No resp.</th><th class="r">Pending</th><th class="r">Acceptance</th><th class="no-print"></th></tr></thead><tbody>
+{% for c in camps %}<tr><td><a href="?campaign={{ c.campaign_id }}"><b>{{ c.campaign_name }}</b></a></td><td>{{ badge(c.target_segment) }}</td><td class="r">{{ c.discount_pct }}%</td><td>{{ badge(c.status) }}</td><td class="r">{{ c.actions|num }}</td><td class="r">{{ c.accepted|num }}</td><td class="r">{{ c.declined|num }}</td><td class="r">{{ c.no_response|num }}</td><td class="r">{{ c.pending|num }}</td><td class="r">{{ c.acceptance_pct|pct }}</td>
+<td class="no-print">{% if c.status!='CLOSED' %}<form class="inline" method="post" action="{{ url_for('campaign_plan', cid=c.campaign_id) }}"><button class="btn sm">Plan targets</button></form>{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+<form class="card no-print" method="post" action="{{ url_for('campaign_new') }}" style="margin-top:16px"><h2>New campaign</h2><div class="hint"><code>sp_create_campaign</code></div>
+  <div class="form"><div><label>Name</label><input name="name" required style="width:100%"></div>
+  <div><label>Target segment</label><select name="segment" style="width:100%">{% for s in segments %}<option>{{ s }}</option>{% endfor %}</select></div>
+  <div><label>Offer</label><input name="offer" required style="width:100%"></div>
+  <div><label>Discount %</label><input name="discount" type="number" min="0" max="100" step="0.5" value="0" style="width:100%"></div>
+  <div><label>Start</label><input name="start" type="date" required value="{{ business_date.strftime('%Y-%m-%d') if business_date }}" style="width:100%"></div>
+  <div><label>End</label><input name="end" type="date" required style="width:100%"></div>
+  <div class="full"><button class="btn primary">Create campaign</button></div></div></form>
+<div class="card tw" style="margin-top:16px"><h2>Retention actions</h2><div class="hint">Pending actions first{% if a.get('campaign') %} · filtered by campaign <a href="{{ url_for('retention') }}">(clear)</a>{% endif %}</div>
+<table><thead><tr><th>#</th><th>Customer</th><th>Campaign</th><th>Type</th><th>Date</th><th>Outcome</th><th>Notes</th><th class="no-print"></th></tr></thead><tbody>
+{% for x in actions %}<tr><td>{{ x.action_id }}</td><td><a href="{{ url_for('customer', cid=x.customer_id) }}">{{ x.full_name }}</a></td><td>{{ x.campaign_name or '—' }}</td><td>{{ x.action_type }}</td><td>{{ x.action_date|d }}</td><td>{{ badge(x.outcome) }}</td><td>{{ x.notes }}</td>
+<td class="nowrap no-print">{% if x.outcome=='PENDING' %}{% for o in ['ACCEPTED','DECLINED','NO_RESPONSE'] %}<form class="inline" method="post" action="{{ url_for('action_outcome', aid=x.action_id) }}"><input type="hidden" name="outcome" value="{{ o }}"><button class="btn sm">{{ o.replace('_',' ').title() }}</button></form> {% endfor %}{% endif %}</td></tr>
+{% else %}<tr><td colspan="8" class="sub">No actions.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}{% from '_macros.html' import badge, pager %}{% block title %}Dashboard{% endblock %}
+{% block h1 %}Retention dashboard{% endblock %}
+{% block sub %}Live view of churn, revenue and risk · every figure is computed inside Oracle (package <code>pkg_retainai</code>){% endblock %}
+{% block body %}
+<div class="grid kpis">
+  <div class="card kpi"><div class="lbl">Customers</div><div class="val">{{ k.total_customers|num }}</div><div class="note">{{ k.active_customers|num }} active · {{ k.churned_customers|num }} churned</div></div>
+  <div class="card kpi red"><div class="lbl">Churn rate</div><div class="val">{{ k.churn_rate_pct|pct(2) }}</div><div class="note">share of customers lost</div></div>
+  <div class="card kpi blue"><div class="lbl">Monthly recurring revenue</div><div class="val">{{ k.mrr|money }}</div><div class="note">active subscriptions</div></div>
+  <div class="card kpi amber"><div class="lbl">Revenue at risk / month</div><div class="val">{{ k.revenue_at_risk|money }}</div><div class="note">{{ k.high_risk_customers|num }} active HIGH-risk customers</div></div>
+  <div class="card kpi"><div class="lbl">Open tickets</div><div class="val">{{ k.open_tickets|num }}</div><div class="note">overdue bills: {{ k.overdue_amount|money }}</div></div>
+  <div class="card kpi green"><div class="lbl">Avg. tenure (active)</div><div class="val">{{ k.avg_tenure_months }}</div><div class="note">months</div></div>
+</div>
+<div class="grid cols2">
+  <div class="card"><h2>Churn rate by contract</h2><div class="hint">Month-to-month customers leave far more often</div><div id="c1" class="chart"></div></div>
+  <div class="card"><h2>Churn rate by tenure band</h2><div class="hint">Risk is concentrated in the first year</div><div id="c2" class="chart"></div></div>
+  <div class="card"><h2>Customer segments</h2><div class="hint">Rule-based segmentation (function <code>fn_segment</code>)</div><div id="c3" class="chart"></div></div>
+  <div class="card"><h2>Billing trend</h2><div class="hint">Last six billing months · the newest month is still unpaid at the business date</div><div id="c4" class="chart"></div></div>
+</div>
+<div class="card" style="margin-top:16px"><h2>Retention priority list</h2><div class="hint">Highest-scoring active customers (package procedure <code>high_risk_report</code>)</div>
+<div class="tw"><table><thead><tr><th>#</th><th>Customer</th><th>Contract</th><th class="r">Tenure</th><th class="r">Monthly</th><th>Risk score</th><th>Segment</th></tr></thead><tbody>
+{% for r in top %}<tr><td>{{ r.priority_rank }}</td><td><a href="{{ url_for('customer', cid=r.customer_id) }}">{{ r.full_name }}</a><div class="sub">{{ r.customer_id }}</div></td>
+<td>{{ r.contract_name }}</td><td class="r">{{ r.tenure_months|int }} mo</td><td class="r">{{ r.monthly_charge|money }}</td>
+<td><div class="bar hi"><span style="width:{{ r.rule_score }}%"></span></div><small>{{ r.rule_score|int }}</small></td><td>{{ badge(r.segment) }}</td></tr>{% endfor %}
+</tbody></table></div></div>
+<script>
+(async()=>{
+ const c=await api('/api/churn/CONTRACT');barChart('c1',c.map(x=>x.dimension_value),[{name:'Churn %',values:c.map(x=>x.churn_rate_pct)}],{format:fmt.pct,perBar:true,colors:['#e5484d','#f2a33a','#2fb36d']});
+ const t=await api('/api/churn/TENURE_BAND');barChart('c2',t.map(x=>x.dimension_value),[{name:'Churn %',values:t.map(x=>x.churn_rate_pct)}],{format:fmt.pct,colors:['#3b6fe0']});
+ const s=await api('/api/segments');donut('c3',s.map(x=>x.segment),s.map(x=>x.customers),{center:'customers'});
+ const r=await api('/api/revenue');lineChart('c4',r.map(x=>x.label),[{name:'Billed',values:r.map(x=>x.billed_amount)},{name:'Paid',values:r.map(x=>x.paid_amount)}]);
+})();
+</script>
+{% endblock %}

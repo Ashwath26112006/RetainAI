@@ -1,0 +1,18 @@
+{% extends 'base.html' %}{% from '_macros.html' import badge, pager %}
+{% block title %}New customer{% endblock %}
+{% block h1 %}Register a customer{% endblock %}
+{% block sub %}Calls <code>sp_add_customer</code>: creates the customer, subscription and add-ons, then scores the customer{% endblock %}
+{% block body %}
+<form class="card" method="post"><div class="form">
+  <div><label>Full name</label><input name="full_name" required value="{{ f.get('full_name','') }}" style="width:100%"></div>
+  <div><label>E-mail</label><input name="email" type="email" required value="{{ f.get('email','') }}" style="width:100%"></div>
+  <div><label>Gender</label><select name="gender" style="width:100%"><option>Female</option><option>Male</option></select></div>
+  <div><label>Plan</label><select name="plan_id" style="width:100%">{% for p in plans %}<option value="{{ p.plan_id }}">{{ p.plan_name }} · from {{ p.base_price|money }}</option>{% endfor %}</select></div>
+  <div><label>Contract</label><select name="contract_type_id" style="width:100%">{% for c in contracts %}<option value="{{ c.contract_type_id }}">{{ c.contract_name }}</option>{% endfor %}</select></div>
+  <div><label>Payment method</label><select name="payment_method_id" style="width:100%">{% for m in methods %}<option value="{{ m.payment_method_id }}">{{ m.method_name }}</option>{% endfor %}</select></div>
+  <div><label>Monthly charge (blank = plan price)</label><input name="monthly_charge" type="number" step="0.01" min="0" value="{{ f.get('monthly_charge','') }}" style="width:100%"></div>
+  <div class="full"><label>Add-on services</label><div class="tags">{% for s in services %}<label style="display:inline-flex;gap:6px;align-items:center;font-weight:500;color:var(--ink)"><input type="checkbox" name="services" value="{{ s.service_id }}"> {{ s.service_name }}</label>{% endfor %}</div></div>
+  <div class="full tags">{% for k,l in [('senior','Senior citizen'),('partner','Has partner'),('dependents','Has dependents'),('paperless','Paperless billing')] %}<label style="display:inline-flex;gap:6px;align-items:center;font-weight:500;color:var(--ink)"><input type="checkbox" name="{{ k }}"> {{ l }}</label>{% endfor %}</div>
+  <div class="full"><button class="btn primary">Register customer</button> <a class="btn" href="{{ url_for('customers') }}">Cancel</a></div>
+</div></form>
+{% endblock %}

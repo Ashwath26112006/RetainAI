@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "RetainAI web app (Flask)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/app/app.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": { "RETAINAI_DSN": "localhost:1521/XEPDB1" },
+      "justMyCode": true
+    },
+    {
+      "name": "Browser tests (scripts/ui_tests.py)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/ui_tests.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    }
+  ]
+}

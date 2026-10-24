@@ -1,0 +1,19 @@
+{% extends 'base.html' %}{% from '_macros.html' import badge, pager %}
+{% block title %}Reports{% endblock %}
+{% block h1 %}Retention report{% endblock %}
+{% block sub %}Management summary · prepared from the Oracle package <code>pkg_retainai</code> as of {{ business_date|d }}{% endblock %}
+{% block actions %}<button class="btn no-print" onclick="window.print()">Print / save PDF</button> <a class="btn primary no-print" href="{{ url_for('report_csv', limit=limit) }}">Download CSV</a>{% endblock %}
+{% block body %}
+<div class="card"><h2>Executive summary</h2><p style="margin:6px 0 0">The platform serves <b>{{ k.total_customers|num }}</b> customers, of whom <b>{{ k.churned_customers|num }}</b> have churned (<b>{{ k.churn_rate_pct|pct(2) }}</b>).
+Monthly recurring revenue is <b>{{ k.mrr|money }}</b>; <b>{{ k.revenue_at_risk|money }}</b> per month ({{ k.high_risk_customers|num }} customers) is in the HIGH-risk band and should be targeted first.</p></div>
+<div class="grid cols2" style="margin-top:16px">
+ <div class="card tw"><h2>Churn by contract</h2><table><thead><tr><th>Contract</th><th class="r">Customers</th><th class="r">Churned</th><th class="r">Churn rate</th></tr></thead><tbody>{% for r in contract %}<tr><td>{{ r.dimension_value }}</td><td class="r">{{ r.customers|num }}</td><td class="r">{{ r.churned|num }}</td><td class="r">{{ r.churn_rate_pct|pct(2) }}</td></tr>{% endfor %}</tbody></table></div>
+ <div class="card tw"><h2>Churn by tenure</h2><table><thead><tr><th>Tenure band</th><th class="r">Customers</th><th class="r">Churned</th><th class="r">Churn rate</th></tr></thead><tbody>{% for r in tenure %}<tr><td>{{ r.dimension_value }}</td><td class="r">{{ r.customers|num }}</td><td class="r">{{ r.churned|num }}</td><td class="r">{{ r.churn_rate_pct|pct(2) }}</td></tr>{% endfor %}</tbody></table></div>
+</div>
+<div class="card tw" style="margin-top:16px"><h2>Segments</h2><table><thead><tr><th>Segment</th><th class="r">Customers</th><th class="r">Active</th><th class="r">Avg charge</th><th class="r">MRR</th><th class="r">Avg risk</th></tr></thead><tbody>
+{% for s in seg %}<tr><td>{{ badge(s.segment) }}</td><td class="r">{{ s.customers|num }}</td><td class="r">{{ s.active_customers|num }}</td><td class="r">{{ s.avg_monthly_charge|money }}</td><td class="r">{{ s.monthly_revenue|money }}</td><td class="r">{{ s.avg_risk_score }}</td></tr>{% endfor %}</tbody></table></div>
+<div class="card tw" style="margin-top:16px"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><h2>Top {{ limit }} retention priorities</h2>
+<form class="no-print" method="get"><label style="display:inline">Rows&nbsp;</label><select name="limit" onchange="this.form.submit()">{% for n in [10,25,50,100] %}<option {{ 'selected' if n==limit }}>{{ n }}</option>{% endfor %}</select></form></div>
+<table><thead><tr><th>#</th><th>Customer</th><th>Contract</th><th>Payment</th><th class="r">Tenure</th><th class="r">Monthly</th><th class="r">Score</th><th>Segment</th><th class="r">ML prob.</th></tr></thead><tbody>
+{% for r in top %}<tr><td>{{ r.priority_rank }}</td><td><a href="{{ url_for('customer', cid=r.customer_id) }}">{{ r.full_name }}</a> <span class="sub">{{ r.customer_id }}</span></td><td>{{ r.contract_name }}</td><td>{{ r.payment_method }}</td><td class="r">{{ r.tenure_months|int }}</td><td class="r">{{ r.monthly_charge|money }}</td><td class="r">{{ r.rule_score|int }}</td><td>{{ badge(r.segment) }}</td><td class="r">{{ (r.ml_probability*100)|pct if r.ml_probability is not none else '-' }}</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

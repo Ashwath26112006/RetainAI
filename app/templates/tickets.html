@@ -1,0 +1,22 @@
+{% extends 'base.html' %}{% from '_macros.html' import badge, pager %}
+{% block title %}Support tickets{% endblock %}
+{% block h1 %}Support tickets{% endblock %}
+{% block sub %}Customer issues that influence churn risk (open HIGH/URGENT tickets add to the risk score){% endblock %}
+{% block body %}
+<div class="grid cols2">
+  <div class="card"><h2>By category</h2><div class="tw"><table><thead><tr><th>Category</th><th class="r">Total</th><th class="r">Open</th><th class="r">Avg days to close</th></tr></thead><tbody>
+  {% for s in summary %}<tr><td>{{ s.category }}</td><td class="r">{{ s.total|num }}</td><td class="r">{{ s.open_tickets|num }}</td><td class="r">{{ s.avg_days_to_close }}</td></tr>{% endfor %}</tbody></table></div></div>
+  <form class="card no-print" method="post" action="{{ url_for('ticket_new') }}"><h2>Open a ticket</h2><div class="hint"><code>sp_open_ticket</code> - an urgent cancellation request also queues a retention call (trigger)</div>
+    <div class="form"><div><label>Customer ID</label><input name="customer_id" required placeholder="e.g. 7590-VHVEG" style="width:100%"></div>
+    <div><label>Category</label><select name="category" style="width:100%">{% for x in ['BILLING','TECHNICAL','SERVICE','CANCELLATION','OTHER'] %}<option>{{ x }}</option>{% endfor %}</select></div>
+    <div><label>Priority</label><select name="priority" style="width:100%">{% for x in ['LOW','MEDIUM','HIGH','URGENT'] %}<option {{ 'selected' if x=='MEDIUM' }}>{{ x }}</option>{% endfor %}</select></div>
+    <div><label>Subject</label><input name="subject" required style="width:100%"></div><div class="full"><button class="btn primary">Open ticket</button></div></div></form>
+</div>
+<form class="filters card no-print" method="get" style="margin-top:16px">
+  {% for key,opts in [('status',['OPEN','IN_PROGRESS','RESOLVED','CLOSED']),('category',['BILLING','TECHNICAL','SERVICE','CANCELLATION','OTHER']),('priority',['LOW','MEDIUM','HIGH','URGENT'])] %}
+  <div><label>{{ key.title() }}</label><select name="{{ key }}"><option value="">All</option>{% for o in opts %}<option {{ 'selected' if a.get(key)==o }}>{{ o }}</option>{% endfor %}</select></div>{% endfor %}<button class="btn primary">Filter</button></form>
+<div class="card tw"><table><thead><tr><th>#</th><th>Customer</th><th>Subject</th><th>Category</th><th>Priority</th><th>Status</th><th>Opened</th><th>Closed</th><th></th></tr></thead><tbody>
+{% for t in rows %}<tr><td>{{ t.ticket_id }}</td><td><a href="{{ url_for('customer', cid=t.customer_id) }}">{{ t.full_name }}</a></td><td>{{ t.subject }}</td><td>{{ t.category }}</td><td>{{ badge(t.priority) }}</td><td>{{ badge(t.status) }}</td><td>{{ t.opened_at|d }}</td><td>{{ t.closed_at|d }}</td>
+<td>{% if t.status in ('OPEN','IN_PROGRESS') %}<form class="inline" method="post" action="{{ url_for('ticket_close', tid=t.ticket_id) }}"><button class="btn sm">Close</button></form>{% endif %}</td></tr>
+{% else %}<tr><td colspan="9" class="sub">No tickets.</td></tr>{% endfor %}</tbody></table>{{ pager(page,pages,total,request.args) }}</div>
+{% endblock %}

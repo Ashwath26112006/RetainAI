@@ -1,0 +1,19 @@
+{% extends 'auth_base.html' %}
+{% block form %}
+    <h1>Welcome back</h1><div class="sub">Sign in to the administrator console</div>
+    {% with msgs = get_flashed_messages(with_categories=true) %}{% for cat, m in msgs %}<div class="flash {{ cat }}">{{ m }}</div>{% endfor %}{% endwith %}
+    <div class="fld"><label for="u">Username</label>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>
+      <input id="u" name="username" value="admin" autofocus autocomplete="username"></div>
+    <div class="fld"><label for="p">Password</label>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+      <input id="p" name="password" type="password" placeholder="Enter your password" autocomplete="current-password"></div>
+    <div class="lg-row"><label><input type="checkbox" id="show"> Show password</label><span>Secure sign-in</span></div>
+    <button class="btn primary lg-go">Sign in <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    <a class="lg-forgot" href="{{ url_for('forgot') }}" id="forgotLink">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M11 12.5L20 4M16 8l3 3M14 10l2 2"/></svg>
+      Forgot password?</a>
+{% endblock %}
+{% block scripts %}<script>
+document.getElementById('show').addEventListener('change',function(){document.getElementById('p').type=this.checked?'text':'password'});
+</script>{% endblock %}

@@ -1,0 +1,61 @@
+{
+  "version": "2.0.0",
+  "options": { "cwd": "${workspaceFolder}", "shell": { "executable": "cmd.exe", "args": ["/d", "/c"] } },
+  "tasks": [
+    {
+      "label": "1. Install Python packages",
+      "type": "shell",
+      "command": "python -m pip install -r requirements.txt",
+      "problemMatcher": []
+    },
+    {
+      "label": "2. DB: create schema owner (RETAINAI)",
+      "type": "shell",
+      "command": "sqlplus -L -S \"/ as sysdba\" @sql\\00_create_user.sql",
+      "detail": "Runs as OS-authenticated SYSDBA (no password). Needs Oracle XE running.",
+      "problemMatcher": []
+    },
+    {
+      "label": "3. DB: build all objects, load data, run reports and SQL tests",
+      "type": "shell",
+      "command": "sqlplus -L -S retainai/RetainAI2026@%RETAINAI_DSN% @sql\\run_all.sql",
+      "detail": "Takes a few minutes.",
+      "problemMatcher": []
+    },
+    {
+      "label": "4. Run web app (http://127.0.0.1:5000)",
+      "type": "shell",
+      "command": "python app\\app.py",
+      "isBackground": true,
+      "problemMatcher": { "pattern": { "regexp": "^$" }, "background": { "activeOnStart": true, "beginsPattern": "Serving Flask", "endsPattern": "Running on" } }
+    },
+    {
+      "label": "5. Browser tests",
+      "type": "shell",
+      "command": "python scripts\\ui_tests.py",
+      "detail": "Starts the app itself and drives it with Edge/Playwright",
+      "problemMatcher": []
+    },
+    {
+      "label": "SQL: run a single script (pick file)",
+      "type": "shell",
+      "command": "sqlplus -L retainai/RetainAI2026@%RETAINAI_DSN% @${input:sqlFile}",
+      "problemMatcher": []
+    },
+    {
+      "label": "Setup: steps 1 -> 2 -> 3",
+      "dependsOrder": "sequence",
+      "dependsOn": ["1. Install Python packages", "2. DB: create schema owner (RETAINAI)", "3. DB: build all objects, load data, run reports and SQL tests"],
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "sqlFile",
+      "type": "pickString",
+      "description": "SQL script to run",
+      "options": ["sql\\10_cursors_demo.sql", "sql\\11_reports.sql", "sql\\12_tests.sql", "sql\\13_verify.sql", "sql\\14_demo_routines.sql"],
+      "default": "sql\\12_tests.sql"
+    }
+  ]
+}

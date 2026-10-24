@@ -1,0 +1,21 @@
+{% extends 'auth_base.html' %}{% block title %}Reset password{% endblock %}
+{% block form %}
+    <div class="lg-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 018 0v3M12 14v3"/></svg></div>
+    <h1>Reset password</h1><div class="sub">Enter the recovery code from the terminal and choose a new password.</div>
+    {% with msgs = get_flashed_messages(with_categories=true) %}{% for cat, m in msgs %}<div class="flash {{ cat }}">{{ m }}</div>{% endfor %}{% endwith %}
+    <div class="fld"><label for="c">Recovery code</label>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6z"/></svg>
+      <input id="c" name="code" inputmode="numeric" maxlength="6" placeholder="6-digit code" autocomplete="one-time-code" autofocus></div>
+    <div class="fld"><label for="p">New password</label>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+      <input id="p" name="password" type="password" placeholder="At least 8 characters" autocomplete="new-password"></div>
+    <div class="fld"><label for="p2">Confirm password</label>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+      <input id="p2" name="confirm" type="password" placeholder="Repeat the new password" autocomplete="new-password"></div>
+    <div class="lg-row"><label><input type="checkbox" id="show"> Show passwords</label><a href="{{ url_for('forgot') }}">Send a new code</a></div>
+    <button class="btn primary lg-go">Reset password</button>
+    <a class="lg-back" href="{{ url_for('login') }}">&larr; Back to sign in</a>
+{% endblock %}
+{% block scripts %}<script>
+document.getElementById('show').addEventListener('change',function(){var t=this.checked?'text':'password';document.getElementById('p').type=t;document.getElementById('p2').type=t});
+</script>{% endblock %}

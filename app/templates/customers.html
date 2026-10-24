@@ -1,0 +1,22 @@
+{% extends 'base.html' %}{% from '_macros.html' import badge, pager %}{% block title %}Customers{% endblock %}
+{% block h1 %}Customers{% endblock %}
+{% block sub %}Search, filter and manage customer subscriptions{% endblock %}
+{% block actions %}<a class="btn primary" href="{{ url_for('customer_new') }}">+ New customer</a>{% endblock %}
+{% block body %}
+<form class="filters card no-print" method="get">
+  <div style="flex:2;min-width:200px"><label>Search</label><input name="q" value="{{ a.get('q','') }}" placeholder="Name, ID or e-mail" style="width:100%"></div>
+  <div><label>Status</label><select name="status"><option value="">All</option>{% for s in ['ACTIVE','CHURNED'] %}<option {{ 'selected' if a.get('status')==s }}>{{ s }}</option>{% endfor %}</select></div>
+  <div><label>Risk band</label><select name="band"><option value="">All</option>{% for s in ['HIGH','MEDIUM','LOW'] %}<option {{ 'selected' if a.get('band')==s }}>{{ s }}</option>{% endfor %}</select></div>
+  <div><label>Segment</label><select name="segment"><option value="">All</option>{% for s in segs %}<option {{ 'selected' if a.get('segment')==s }}>{{ s }}</option>{% endfor %}</select></div>
+  <div><label>Contract</label><select name="contract"><option value="">All</option>{% for s in contracts %}<option {{ 'selected' if a.get('contract')==s }}>{{ s }}</option>{% endfor %}</select></div>
+  <div><label>Sort by</label><select name="sort">{% for k,v in [('risk','Risk score'),('name','Name'),('tenure','Tenure'),('charge','Monthly charge'),('id','Customer ID')] %}<option value="{{ k }}" {{ 'selected' if a.get('sort')==k }}>{{ v }}</option>{% endfor %}</select></div>
+  <button class="btn primary">Apply</button>
+</form>
+<div class="card tw"><table><thead><tr><th>Customer</th><th>Status</th><th>Contract</th><th>Internet</th><th class="r">Tenure</th><th class="r">Monthly</th><th>Risk</th><th>Segment</th><th class="r">ML prob.</th></tr></thead><tbody>
+{% for r in rows %}<tr><td><a href="{{ url_for('customer', cid=r.customer_id) }}"><b>{{ r.full_name }}</b></a><div class="sub">{{ r.customer_id }}</div></td>
+<td>{{ badge(r.customer_status) }}</td><td>{{ r.contract_name }}</td><td>{{ r.internet_service }}</td><td class="r">{{ r.tenure_months|int }} mo</td><td class="r">{{ r.monthly_charge|money }}</td>
+<td>{{ badge(r.risk_band) }} <small>{{ r.rule_score|int if r.rule_score is not none }}</small></td><td>{{ badge(r.segment) }}</td>
+<td class="r">{{ (r.ml_probability*100)|pct if r.ml_probability is not none else '-' }}</td></tr>
+{% else %}<tr><td colspan="9" class="sub">No customers match the filters.</td></tr>{% endfor %}</tbody></table>
+{{ pager(page,pages,total,request.args) }}</div>
+{% endblock %}
